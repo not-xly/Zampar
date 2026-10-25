@@ -127,7 +127,7 @@ button.danger { color: var(--danger); border-color: #e7b9b3; }
 .row-content.dragging { transition: none; }
 .row.swiped .row-content { transform: translateX(-84px); }
 
-/* Línea 1: icono · nombre · tipo (centro) · ubicación (final) */
+/* Línea 1: icono · nombre · tipo · ubicación (y asa de arrastre en orden manual) */
 .line1 {
   display: grid;
   grid-template-columns: 20px minmax(0, 1fr) 72px 84px;
@@ -137,6 +137,34 @@ button.danger { color: var(--danger); border-color: #e7b9b3; }
   line-height: 1.25;
 }
 .list[data-tab="mundo"] .line1 { grid-template-columns: 20px minmax(0, 1fr) 72px; }
+.list.manual .line1 { grid-template-columns: 20px minmax(0, 1fr) 72px 84px 20px; }
+.list.manual[data-tab="mundo"] .line1 { grid-template-columns: 20px minmax(0, 1fr) 72px 20px; }
+
+/* Asa de arrastre: tres líneas horizontales */
+.handle {
+  justify-self: end;
+  width: 20px;
+  height: 24px;
+  position: relative;
+  cursor: grab;
+  touch-action: none;
+}
+.handle::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  top: 7px;
+  height: 2px;
+  background: #b5aca2;
+  box-shadow: 0 5px 0 #b5aca2, 0 10px 0 #b5aca2;
+}
+
+.row.dragging {
+  z-index: 2;
+  background: #fff;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+}
 
 .check {
   width: 16px;
@@ -166,9 +194,8 @@ button.danger { color: var(--danger); border-color: #e7b9b3; }
   white-space: nowrap;
 }
 .name { font-weight: 600; }
-.tipo { text-align: center; font-size: 12px; color: var(--tipo); white-space: nowrap; }
-.ubic { text-align: right; font-size: 12px; color: var(--muted); }
-.list[data-tab="mundo"] .ubic.line2 { text-align: left; }
+.tipo { text-align: left; font-size: 12px; color: var(--tipo); white-space: nowrap; }
+.ubic { text-align: left; font-size: 12px; color: var(--muted); }
 
 /* Línea 2: notas (en Mundo, la ubicación va antes) */
 .line2 {
