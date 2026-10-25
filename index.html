@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Zampar">
+  <meta name="theme-color" content="#c4601f">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-180.png">
+  <link rel="stylesheet" href="styles.css">
+  <title>Zampar</title>
+</head>
+<body>
+  <header class="top">
+    <h1>Zampar</h1>
+    <button id="addBtn" class="icon-btn" aria-label="Añadir restaurante">+</button>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab active" data-tab="zaragoza">Zaragoza</button>
+    <button class="tab" data-tab="espana">España</button>
+    <button class="tab" data-tab="mundo">Mundo</button>
+  </nav>
+
+  <div class="filters">
+    <select id="filterUbicacion" aria-label="Filtrar por ubicación" hidden></select>
+    <select id="filterTipo" aria-label="Filtrar por tipo"></select>
+    <span id="count" class="count"></span>
+  </div>
+
+  <main id="list" class="list" data-tab="zaragoza"></main>
+
+  <footer class="bottombar">
+    <button id="exportBtn">Exportar</button>
+    <label class="btn">Importar
+      <input type="file" id="importFile" accept="application/json" hidden>
+    </label>
+  </footer>
+
+  <dialog id="ficha">
+    <form id="fichaForm">
+      <h2 id="fichaTitle">Nuevo restaurante</h2>
+
+      <label>Nombre
+        <input name="nombre" required autocomplete="off">
+      </label>
+
+      <fieldset class="tipos">
+        <legend>Tipo</legend>
+        <label class="chip"><input type="radio" name="tipo" value="formal" required><span>Formal</span></label>
+        <label class="chip"><input type="radio" name="tipo" value="informal"><span>Informal</span></label>
+        <label class="chip"><input type="radio" name="tipo" value="tapeo"><span>Tapeo</span></label>
+        <label class="chip"><input type="radio" name="tipo" value="investigar"><span>Investigar</span></label>
+      </fieldset>
+
+      <label>Ubicación
+        <input name="ubicacion" autocomplete="off">
+      </label>
+
+      <label class="visit-toggle">
+        <input type="checkbox" name="visitado"> Ya he estado
+      </label>
+
+      <label>Notas
+        <textarea name="notas" rows="5"></textarea>
+      </label>
+
+      <div class="dialog-actions">
+        <button type="button" id="fDelete" class="danger">Borrar</button>
+        <span class="spacer"></span>
+        <button type="button" id="fCancel">Cancelar</button>
+        <button type="submit" class="primary">Guardar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
