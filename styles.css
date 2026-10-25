@@ -127,18 +127,16 @@ button.danger { color: var(--danger); border-color: #e7b9b3; }
 .row-content.dragging { transition: none; }
 .row.swiped .row-content { transform: translateX(-84px); }
 
-/* Línea 1: icono · nombre · tipo · ubicación (y asa de arrastre en orden manual) */
+/* Línea 1: icono · nombre · tipo · ubicación · asa de arrastre */
 .line1 {
   display: grid;
-  grid-template-columns: 20px minmax(0, 1fr) 72px 84px;
+  grid-template-columns: 20px minmax(0, 1fr) 72px 84px 20px;
   align-items: center;
   gap: 6px;
   font-size: 15px;
   line-height: 1.25;
 }
-.list[data-tab="mundo"] .line1 { grid-template-columns: 20px minmax(0, 1fr) 72px; }
-.list.manual .line1 { grid-template-columns: 20px minmax(0, 1fr) 72px 84px 20px; }
-.list.manual[data-tab="mundo"] .line1 { grid-template-columns: 20px minmax(0, 1fr) 72px 20px; }
+.list[data-tab="mundo"] .line1 { grid-template-columns: 20px minmax(0, 1fr) 72px 20px; }
 
 /* Asa de arrastre: tres líneas horizontales */
 .handle {

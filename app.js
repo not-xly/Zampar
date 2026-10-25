@@ -16,7 +16,6 @@ const collator = new Intl.Collator("es", { sensitivity: "base", numeric: true })
 
 const list = document.getElementById("list");
 const count = document.getElementById("count");
-const sortMode = document.getElementById("sortMode");
 const filterTipo = document.getElementById("filterTipo");
 const filterUbicacion = document.getElementById("filterUbicacion");
 const ficha = document.getElementById("ficha");
@@ -31,9 +30,9 @@ let editingId = null;
 let openId = null;
 let swipedId = null;
 const filters = {
-  zaragoza: { tipo: "", ubicacion: "", manual: false },
-  espana: { tipo: "", ubicacion: "", manual: false },
-  mundo: { tipo: "", ubicacion: "", manual: false },
+  zaragoza: { tipo: "", ubicacion: "" },
+  espana: { tipo: "", ubicacion: "" },
+  mundo: { tipo: "", ubicacion: "" },
 };
 
 // Datos
@@ -53,20 +52,16 @@ function load() {
   }
 }
 
-// Cada restaurante tiene una posición manual dentro de su pestaña. Si no la tiene
-// (datos antiguos o importados), se le asigna la del orden automático.
+// Cada restaurante tiene su posición en la lista de su pestaña. Si no la tiene
+// (datos antiguos o importados), se le asigna la del orden alfabético.
 function ensureOrden() {
   for (const tab of Object.keys(TABS)) {
     const items = restaurants.filter((r) => r.tab === tab);
     if (items.every((r) => Number.isFinite(r.orden))) continue;
-    items.sort(autoCompare(tab)).forEach((r, i) => {
+    items.sort(alphabeticalCompare(tab)).forEach((r, i) => {
       r.orden = i;
     });
   }
-}
-
-function nextOrden(tab) {
-  return restaurants.filter((r) => r.tab === tab).reduce((max, r) => Math.max(max, r.orden), -1) + 1;
 }
 
 function save() {
@@ -98,17 +93,30 @@ function toggleVisited(id) {
   render();
 }
 
-// Orden automático: Zaragoza por nombre; España y Mundo por ubicación (y luego por nombre).
-function autoCompare(tab) {
+// Criterio alfabético para colocar un restaurante nuevo: Zaragoza por nombre;
+// España y Mundo por ubicación (y luego por nombre).
+function alphabeticalCompare(tab) {
   if (tab === "zaragoza") return (a, b) => collator.compare(a.nombre, b.nombre);
   return (a, b) => collator.compare(a.ubicacion, b.ubicacion) || collator.compare(a.nombre, b.nombre);
 }
 
-// Todos los restaurantes de la pestaña actual, sin filtrar.
+// Restaurantes de la pestaña actual en el orden de la lista (sin filtrar).
 function tabRestaurants() {
-  const manual = filters[currentTab].manual;
-  const sorter = manual ? (a, b) => a.orden - b.orden : autoCompare(currentTab);
-  return restaurants.filter((r) => r.tab === currentTab).sort(sorter);
+  return restaurants.filter((r) => r.tab === currentTab).sort((a, b) => a.orden - b.orden);
+}
+
+// Un restaurante nuevo se coloca donde le corresponde alfabéticamente.
+function addRestaurant(data) {
+  const tab = currentTab;
+  const record = { id: newId(), tab, ...data };
+  const items = tabRestaurants();
+  const compare = alphabeticalCompare(tab);
+  const index = items.findIndex((r) => compare(record, r) < 0);
+  items.splice(index === -1 ? items.length : index, 0, record);
+  items.forEach((r, i) => {
+    r.orden = i;
+  });
+  restaurants.push(record);
 }
 
 function visibleRestaurants() {
@@ -212,7 +220,6 @@ function render() {
   renderFilters();
   const items = visibleRestaurants();
   list.dataset.tab = currentTab;
-  list.classList.toggle("manual", filters[currentTab].manual);
   list.replaceChildren(...items.map(renderRow));
   if (!items.length) {
     list.append(el("p", "empty", "Aún no hay restaurantes aquí. Pulsa + para añadir uno."));
@@ -222,8 +229,6 @@ function render() {
 
 function renderFilters() {
   const f = filters[currentTab];
-  sortMode.value = f.manual ? "manual" : "auto";
-
   filterTipo.replaceChildren(
     option("", "Todos los tipos"),
     ...Object.entries(TIPOS).map(([value, label]) => option(value, label))
@@ -273,13 +278,11 @@ function renderRow(r) {
   const line1 = el("div", "line1");
   line1.append(check, el("span", "name", r.nombre), el("span", "tipo", TIPOS[r.tipo] || ""));
   if (currentTab !== "mundo") line1.append(el("span", "ubic", r.ubicacion || ""));
-  if (filters[currentTab].manual) {
-    const handle = el("span", "handle");
-    handle.setAttribute("aria-label", "Arrastrar para cambiar el orden");
-    handle.addEventListener("pointerdown", (e) => startReorder(e, row));
-    handle.addEventListener("click", (e) => e.stopPropagation());
-    line1.append(handle);
-  }
+  const handle = el("span", "handle");
+  handle.setAttribute("aria-label", "Arrastrar para cambiar el orden");
+  handle.addEventListener("pointerdown", (e) => startReorder(e, row));
+  handle.addEventListener("click", (e) => e.stopPropagation());
+  line1.append(handle);
   content.append(line1);
 
   if (currentTab === "mundo") content.append(el("div", "line2 ubic", r.ubicacion || ""));
@@ -394,7 +397,7 @@ form.addEventListener("submit", (e) => {
   if (editingId) {
     Object.assign(findRestaurant(editingId), data);
   } else {
-    restaurants.push({ id: newId(), tab: currentTab, orden: nextOrden(currentTab), ...data });
+    addRestaurant(data);
   }
   save();
   ficha.close();
@@ -421,11 +424,6 @@ document.querySelectorAll(".tab").forEach((btn) => {
     document.querySelectorAll(".tab").forEach((t) => t.classList.toggle("active", t === btn));
     render();
   });
-});
-
-sortMode.addEventListener("change", () => {
-  filters[currentTab].manual = sortMode.value === "manual";
-  render();
 });
 
 filterTipo.addEventListener("change", () => {
