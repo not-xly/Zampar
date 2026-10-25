@@ -111,8 +111,10 @@ function addRestaurant(data) {
   const record = { id: newId(), tab, ...data };
   const items = tabRestaurants();
   const compare = alphabeticalCompare(tab);
-  const index = items.findIndex((r) => compare(record, r) < 0);
-  items.splice(index === -1 ? items.length : index, 0, record);
+  // Se coloca justo detrás de su predecesor alfabético (o al principio si no tiene).
+  const predecessor = [...items].sort(compare).filter((r) => compare(r, record) <= 0).pop();
+  const index = predecessor ? items.indexOf(predecessor) + 1 : 0;
+  items.splice(index, 0, record);
   items.forEach((r, i) => {
     r.orden = i;
   });
@@ -164,18 +166,22 @@ function placeRow(dragged, y) {
   }
 }
 
+// Arrastre activo, si lo hay. Solo puede haber uno a la vez.
+let stopActiveDrag = null;
+
 function startReorder(e, row) {
   e.preventDefault();
   e.stopPropagation();
-  const handle = e.currentTarget;
-  handle.setPointerCapture(e.pointerId);
+  if (stopActiveDrag) stopActiveDrag();
   row.classList.add("dragging");
 
   let y = e.clientY;
   let frame = 0;
 
   // Mientras se arrastra junto al borde, la lista se desplaza sola.
+  // Si la fila ya no está en pantalla (la lista se ha repintado), el bucle se detiene.
   const tick = () => {
+    if (!row.isConnected) return stop(false);
     const box = list.getBoundingClientRect();
     if (y < box.top + EDGE) list.scrollTop -= SCROLL_STEP;
     else if (y > box.bottom - EDGE) list.scrollTop += SCROLL_STEP;
@@ -183,21 +189,26 @@ function startReorder(e, row) {
     frame = requestAnimationFrame(tick);
   };
 
+  // Los eventos van a window: no dependen de que el asa siga en el mismo sitio del DOM.
   const onMove = (ev) => {
     y = ev.clientY;
   };
-  const onEnd = () => {
-    cancelAnimationFrame(frame);
-    handle.removeEventListener("pointermove", onMove);
-    handle.removeEventListener("pointerup", onEnd);
-    handle.removeEventListener("pointercancel", onEnd);
-    row.classList.remove("dragging");
-    commitOrder();
-  };
+  const onEnd = () => stop(true);
 
-  handle.addEventListener("pointermove", onMove);
-  handle.addEventListener("pointerup", onEnd);
-  handle.addEventListener("pointercancel", onEnd);
+  function stop(commit) {
+    cancelAnimationFrame(frame);
+    window.removeEventListener("pointermove", onMove);
+    window.removeEventListener("pointerup", onEnd);
+    window.removeEventListener("pointercancel", onEnd);
+    stopActiveDrag = null;
+    row.classList.remove("dragging");
+    if (commit) commitOrder();
+  }
+
+  stopActiveDrag = () => stop(false);
+  window.addEventListener("pointermove", onMove);
+  window.addEventListener("pointerup", onEnd);
+  window.addEventListener("pointercancel", onEnd);
   frame = requestAnimationFrame(tick);
 }
 
@@ -217,6 +228,7 @@ function option(value, label) {
 }
 
 function render() {
+  if (stopActiveDrag) stopActiveDrag();
   renderFilters();
   const items = visibleRestaurants();
   list.dataset.tab = currentTab;
